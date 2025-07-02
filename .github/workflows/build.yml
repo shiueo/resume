@@ -1,0 +1,43 @@
+name: Build Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Cache build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            .pnpm-store
+            node_modules
+            .sveltekit
+          key: ${{ runner.os }}-sveltekit-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('src/**/*') }}
+          restore-keys: |
+            ${{ runner.os }}-sveltekit-${{ hashFiles('**/pnpm-lock.yaml') }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Sveltekit project
+        run: pnpm build
